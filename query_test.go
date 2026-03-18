@@ -74,3 +74,32 @@ func TestDNSQuestionsToBytes(t *testing.T) {
 		assert.Equal(t, tt.expected, actual)
 	}
 }
+
+func TestBuildQuery(t *testing.T) {
+	var tests = []struct {
+		queryID    uint16
+		domainName string
+		recordType DNSQueryType
+		expected   []byte
+	}{
+		{
+			queryID:    0x3c5f,
+			domainName: "www.example.com",
+			recordType: TYPE_A,
+			expected: []byte(
+				"\x3c\x5f\x01\x00\x00\x01\x00\x00" +
+					"\x00\x00\x00\x00\x03\x77\x77\x77" +
+					"\x07\x65\x78\x61\x6d\x70\x6c\x65" +
+					"\x03\x63\x6f\x6d\x00\x00\x01\x00" +
+					"\x01",
+			),
+		},
+	}
+
+	for _, tt := range tests {
+		actual, err := BuildQuery(tt.queryID, tt.domainName, tt.recordType)
+
+		assert.NoError(t, err)
+		assert.Equal(t, tt.expected, actual)
+	}
+}
