@@ -53,7 +53,7 @@ func TestDNSQuestionsToBytes(t *testing.T) {
 				class: 1,
 			},
 			expected: []byte(
-				"\x07\x65\x78\x61\x6d\x70\x6c\x65\x03\x63\x6f\x6d\x00\x00\x01\x00\x01",
+				"\x07example\x03com\x00\x00\x01\x00\x01",
 			),
 		}, {
 			q: DNSQuestion{
@@ -62,7 +62,7 @@ func TestDNSQuestionsToBytes(t *testing.T) {
 				class: 0,
 			},
 			expected: []byte(
-				"\x06\x67\x6f\x6f\x67\x6c\x65\x03\x63\x6f\x6d\x00\x00\x00\x00\x00",
+				"\x06google\x03com\x00\x00\x00\x00\x00",
 			),
 		},
 	}
