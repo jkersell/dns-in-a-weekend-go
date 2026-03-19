@@ -1,15 +1,4 @@
-// Package query provides basic DNS query functionality.
-//
-// This is a toy implementation of a DNS query based on Julia Evens' tutorial [DNS in a
-// Weekend]. It provides types to build the query header and question, as well as
-// methods to encode them for sending over the wire.
-//
-// The primary interface to this package is the BuildQuery function, which assembles
-// a DNSHeader and a DNSQuestion to create a query. A DNSHeader and DNSQuestion can
-// be constructed directly and their bytes representation concatenated to create a query.
-//
-// [DNS in a Weekend]: https://implement-dns.wizardzines.com
-package query
+package main
 
 import (
 	"bytes"
