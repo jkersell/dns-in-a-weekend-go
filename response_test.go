@@ -55,3 +55,45 @@ func TestParseQuestion(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, expected, *actual)
 }
+
+func TestDecodePointer(t *testing.T) {
+	tests := []struct {
+		length   byte
+		nextByte byte
+		expected uint16
+	}{
+		{
+			length:   0b1111_1111,
+			nextByte: 0b1111_1111,
+			expected: 16383,
+		},
+		{
+			length:   0b1100_1111,
+			nextByte: 0b1111_1111,
+			expected: 4095,
+		},
+		{
+			length:   0b1100_0000,
+			nextByte: 0b0000_0000,
+			expected: 0,
+		},
+		{
+			length:   0b1100_0000,
+			nextByte: 0b1111_1111,
+			expected: 255,
+		},
+		{
+			length:   0b1100_0000,
+			nextByte: 0b0000_0001,
+			expected: 1,
+		},
+	}
+	for _, tt := range tests {
+		r := bytes.NewReader([]byte{tt.nextByte})
+
+		actual, err := decodePointer(tt.length, r)
+
+		assert.NoError(t, err)
+		assert.Equal(t, tt.expected, actual)
+	}
+}
