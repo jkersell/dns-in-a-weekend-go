@@ -56,6 +56,23 @@ func TestParseQuestion(t *testing.T) {
 	assert.Equal(t, expected, *actual)
 }
 
+func TestParseRecord(t *testing.T) {
+	expected := DNSRecord{
+		name:  []byte("www.example.com"),
+		type_: TYPE_A,
+		class: CLASS_IN,
+		ttl:   21147,
+		data:  []byte{0x5d, 0xb8, 0xd8, 0x22},
+	}
+	r := bytes.NewReader(RESPONSE_BYTES)
+	r.Seek(33, io.SeekStart)
+
+	actual, err := ParseRecord(r)
+
+	assert.NoError(t, err)
+	assert.Equal(t, expected, *actual)
+}
+
 func TestDecodePointer(t *testing.T) {
 	tests := []struct {
 		length   byte

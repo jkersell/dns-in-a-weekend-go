@@ -7,6 +7,15 @@ import (
 	"io"
 )
 
+// DNSRecord is a representation of a DNS record
+type DNSRecord struct {
+	name  []byte
+	type_ DNSQueryType
+	class DNSQueryClass
+	ttl   uint32
+	data  []byte
+}
+
 // ParseHeader parses the header from a DNS response and returns it in a DNSHeader
 func ParseHeader(r *bytes.Reader) (*DNSHeader, error) {
 	var h DNSHeader
@@ -133,4 +142,44 @@ func decodePointer(length byte, r *bytes.Reader) (uint16, error) {
 		return 0, fmt.Errorf("Failed to decode name pointer: %v", err)
 	}
 	return pointer, nil
+}
+
+// ParseRecord parses a DNS record from a DNS response and returns it in a
+// DNSRecord
+func ParseRecord(r *bytes.Reader) (*DNSRecord, error) {
+	var rec DNSRecord
+	name, err := decodeName(r)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse the record: %v", err)
+	}
+
+	rec.name = name
+	err = binary.Read(r, binary.BigEndian, &rec.type_)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse the record: %v", err)
+	}
+
+	err = binary.Read(r, binary.BigEndian, &rec.class)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse the record: %v", err)
+	}
+
+	err = binary.Read(r, binary.BigEndian, &rec.ttl)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse the record: %v", err)
+	}
+
+	var dataLen uint16
+	err = binary.Read(r, binary.BigEndian, &dataLen)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse the record: %v", err)
+	}
+
+	rec.data = make([]byte, dataLen)
+	err = binary.Read(r, binary.BigEndian, &rec.data)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse the record reading data: %v", err)
+	}
+
+	return &rec, nil
 }
