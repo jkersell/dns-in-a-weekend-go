@@ -16,6 +16,69 @@ type DNSRecord struct {
 	data  []byte
 }
 
+// DNSPacket is a representation of a DNS packet
+type DNSPacket struct {
+	header      *DNSHeader
+	questions   []*DNSQuestion
+	answers     []*DNSRecord
+	authorities []*DNSRecord
+	additionals []*DNSRecord
+}
+
+// ParsePacket takes a slice of bytes and attempts to parse a DNS packet from it. If
+// successful a DNSPacket is returned.
+func ParsePacket(data []byte) (*DNSPacket, error) {
+	r := bytes.NewReader(data)
+	header, err := ParseHeader(r)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse a DNS packet: %v", err)
+	}
+
+	questions := make([]*DNSQuestion, header.num_questions)
+	for i := 0; i < int(header.num_questions); i++ {
+		q, err := ParseQuestion(r)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to parse a DNS packet: %v", err)
+		}
+		questions[i] = q
+	}
+
+	answers := make([]*DNSRecord, header.num_answers)
+	for i := 0; i < int(header.num_answers); i++ {
+		a, err := ParseRecord(r)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to parse a DNS packet: %v", err)
+		}
+		answers[i] = a
+	}
+
+	authorities := make([]*DNSRecord, header.num_authorities)
+	for i := 0; i < int(header.num_authorities); i++ {
+		auth, err := ParseRecord(r)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to parse a DNS packet: %v", err)
+		}
+		authorities[i] = auth
+	}
+
+	additionals := make([]*DNSRecord, header.num_additionals)
+	for i := 0; i < int(header.num_additionals); i++ {
+		ad, err := ParseRecord(r)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to parse a DNS packet: %v", err)
+		}
+		additionals[i] = ad
+	}
+
+	return &DNSPacket{
+		header:      header,
+		questions:   questions,
+		answers:     answers,
+		authorities: authorities,
+		additionals: additionals,
+	}, nil
+}
+
 // ParseHeader parses the header from a DNS response and returns it in a DNSHeader
 func ParseHeader(r *bytes.Reader) (*DNSHeader, error) {
 	var h DNSHeader

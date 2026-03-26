@@ -2,9 +2,10 @@ package main
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var RESPONSE_BYTES []byte = []byte{
@@ -113,4 +114,39 @@ func TestDecodePointer(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, tt.expected, actual)
 	}
+}
+
+func TestParsePacket(t *testing.T) {
+	expected := DNSPacket{
+		header: &DNSHeader{
+			id:              0x6056,
+			flags:           33152,
+			num_questions:   1,
+			num_additionals: 0,
+			num_authorities: 0,
+			num_answers:     1,
+		},
+		questions: []*DNSQuestion{
+			{
+				name:  []byte("www.example.com"),
+				type_: TYPE_A,
+				class: CLASS_IN,
+			},
+		},
+		answers: []*DNSRecord{
+			{
+				name:  []byte("www.example.com"),
+				type_: TYPE_A,
+				class: CLASS_IN,
+				ttl:   21147,
+				data:  []byte{0x5d, 0xb8, 0xd8, 0x22},
+			},
+		},
+		authorities: []*DNSRecord{},
+		additionals: []*DNSRecord{},
+	}
+	actual, err := ParsePacket(RESPONSE_BYTES)
+
+	assert.NoError(t, err)
+	assert.Equal(t, expected, *actual)
 }
