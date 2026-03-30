@@ -16,6 +16,38 @@ import (
 	"time"
 )
 
+func BuildQuery(
+	queryID uint16,
+	domainName string,
+	recordType DNSQueryType,
+) ([]byte, error) {
+	header := DNSHeader{
+		id:              queryID,
+		flags:           RECURSION_DESIRED,
+		num_questions:   1,
+		num_answers:     0,
+		num_authorities: 0,
+		num_additionals: 0,
+	}
+	question := DNSQuestion{
+		name:  []byte(domainName),
+		type_: recordType,
+		class: CLASS_IN,
+	}
+	var query []byte
+	header_bytes, err := header.ToBytes()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to build query: %v", err)
+	}
+	query = append(query, header_bytes...)
+	question_bytes, err := question.ToBytes()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to build query: %v", err)
+	}
+	query = append(query, question_bytes...)
+	return query, nil
+}
+
 func lookupDomain(domain string) (string, error) {
 	address := "8.8.8.8:53"
 	conn, err := net.Dial("udp", address)
