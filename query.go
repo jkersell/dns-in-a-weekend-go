@@ -121,8 +121,7 @@ func (q *DNSQuestion) ToBytes() ([]byte, error) {
 // octet.
 func (q *DNSQuestion) encodeName() []byte {
 	encoded := []byte{}
-	parts := bytes.Split(q.name, []byte("."))
-	for _, part := range parts {
+	for part := range bytes.SplitSeq(q.name, []byte(".")) {
 		encoded = append(encoded, byte(len(part)))
 		encoded = append(encoded, part...)
 	}
