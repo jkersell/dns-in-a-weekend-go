@@ -30,8 +30,23 @@ func main() {
 	}
 
 	conn.Write(q)
+
 	r := bufio.NewReader(conn)
 	buf := make([]byte, 1024)
-
 	r.Read(buf)
+
+	packet, err := ParsePacket(buf)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to parse DNS packet: %v", err)
+		os.Exit(1)
+	}
+
+	ipAddress := packet.answers[0].data
+	fmt.Printf(
+		"IP: %d.%d.%d.%d\n",
+		ipAddress[0],
+		ipAddress[1],
+		ipAddress[2],
+		ipAddress[3],
+	)
 }
