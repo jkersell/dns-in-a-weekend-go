@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"math/rand"
-	"time"
 )
 
 type DNSQueryType uint16
@@ -53,11 +51,6 @@ func BuildQuery(
 	}
 	query = append(query, question_bytes...)
 	return query, nil
-}
-
-func DnsQueryID() uint16 {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	return uint16(r.Intn(65535))
 }
 
 // DNSHeader is a representation of the header of a DNS query.

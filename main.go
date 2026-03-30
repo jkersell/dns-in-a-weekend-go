@@ -10,8 +10,10 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math/rand"
 	"net"
 	"os"
+	"time"
 )
 
 func lookupDomain(domain string) (string, error) {
@@ -22,7 +24,7 @@ func lookupDomain(domain string) (string, error) {
 	}
 	defer conn.Close()
 
-	q, err := BuildQuery(DnsQueryID(), domain, TYPE_A)
+	q, err := BuildQuery(dnsQueryID(), domain, TYPE_A)
 	if err != nil {
 		return "", fmt.Errorf("Failed to build a DNS query: %v", err)
 	}
@@ -46,6 +48,11 @@ func lookupDomain(domain string) (string, error) {
 		ipAddress[2],
 		ipAddress[3],
 	), nil
+}
+
+func dnsQueryID() uint16 {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	return uint16(r.Intn(65535))
 }
 
 func main() {
