@@ -14,19 +14,17 @@ import (
 	"os"
 )
 
-func main() {
+func lookupDomain(domain string) (string, error) {
 	address := "8.8.8.8:53"
 	conn, err := net.Dial("udp", address)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to connect to %v", address)
-		os.Exit(1)
+		return "", fmt.Errorf("Failed to connect to %v", address)
 	}
 	defer conn.Close()
 
-	q, err := BuildQuery(DnsQueryID(), "www.example.com", TYPE_A)
+	q, err := BuildQuery(DnsQueryID(), domain, TYPE_A)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to build a DNS query: %v", err)
-		os.Exit(1)
+		return "", fmt.Errorf("Failed to build a DNS query: %v", err)
 	}
 
 	conn.Write(q)
@@ -37,16 +35,24 @@ func main() {
 
 	packet, err := ParsePacket(buf)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to parse DNS packet: %v", err)
-		os.Exit(1)
+		return "", fmt.Errorf("Failed to parse DNS packet: %v", err)
 	}
 
 	ipAddress := packet.answers[0].data
-	fmt.Printf(
-		"IP: %d.%d.%d.%d\n",
+	return fmt.Sprintf(
+		"%d.%d.%d.%d",
 		ipAddress[0],
 		ipAddress[1],
 		ipAddress[2],
 		ipAddress[3],
-	)
+	), nil
+}
+
+func main() {
+	ip, err := lookupDomain("www.example.com")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to look up domain: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println("IP: ", ip)
 }
