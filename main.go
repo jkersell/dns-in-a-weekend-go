@@ -48,17 +48,18 @@ func BuildQuery(
 	return query, nil
 }
 
-func lookupDomain(domain string) (string, error) {
-	address := "8.8.8.8:53"
-	conn, err := net.Dial("udp", address)
+// lookupDomain sends a query to the name server at address to request records of type
+// recordType for domain and returns a DNSPacket.
+func lookupDomain(address, domain string, recordType DNSQueryType) (*DNSPacket, error) {
+	conn, err := net.Dial("udp", net.JoinHostPort(address, "53"))
 	if err != nil {
-		return "", fmt.Errorf("Failed to connect to %v", address)
+		return nil, fmt.Errorf("Failed to connect to %v", address)
 	}
 	defer conn.Close()
 
-	q, err := BuildQuery(dnsQueryID(), domain, TYPE_A)
+	q, err := BuildQuery(dnsQueryID(), domain, recordType)
 	if err != nil {
-		return "", fmt.Errorf("Failed to build a DNS query: %v", err)
+		return nil, fmt.Errorf("Failed to build a DNS query: %v", err)
 	}
 
 	conn.Write(q)
@@ -69,21 +70,10 @@ func lookupDomain(domain string) (string, error) {
 
 	packet, err := ParsePacket(buf)
 	if err != nil {
-		return "", fmt.Errorf("Failed to parse DNS packet: %v", err)
+		return nil, fmt.Errorf("Failed to parse DNS packet: %v", err)
 	}
 
-	if packet.header.num_answers == 0 {
-		return "", fmt.Errorf("Domain name not found")
-	}
-
-	ipAddress := packet.answers[0].data
-	return fmt.Sprintf(
-		"%d.%d.%d.%d",
-		ipAddress[0],
-		ipAddress[1],
-		ipAddress[2],
-		ipAddress[3],
-	), nil
+	return packet, nil
 }
 
 func dnsQueryID() uint16 {
@@ -92,10 +82,23 @@ func dnsQueryID() uint16 {
 }
 
 func main() {
-	ip, err := lookupDomain("www.example.com")
+	packet, err := lookupDomain("8.8.8.8", "www.example.com", TYPE_A)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to look up domain: %v\n", err)
 		os.Exit(1)
 	}
+
+	if packet.header.num_answers == 0 {
+		fmt.Println("Domain name not found")
+	}
+
+	ipAddress := packet.answers[0].data
+	ip := fmt.Sprintf(
+		"%d.%d.%d.%d",
+		ipAddress[0],
+		ipAddress[1],
+		ipAddress[2],
+		ipAddress[3],
+	)
 	fmt.Println("IP: ", ip)
 }
