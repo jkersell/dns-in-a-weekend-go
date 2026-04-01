@@ -72,6 +72,10 @@ func lookupDomain(domain string) (string, error) {
 		return "", fmt.Errorf("Failed to parse DNS packet: %v", err)
 	}
 
+	if packet.header.num_answers == 0 {
+		return "", fmt.Errorf("Domain name not found")
+	}
+
 	ipAddress := packet.answers[0].data
 	return fmt.Sprintf(
 		"%d.%d.%d.%d",
