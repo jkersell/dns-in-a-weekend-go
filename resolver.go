@@ -7,15 +7,15 @@ import (
 	"io"
 )
 
-type DNSQueryType uint16
-type DNSQueryClass uint16
+type RRType uint16
+type RRClass uint16
 
-const TYPE_A DNSQueryType = 1
-const TYPE_NS DNSQueryType = 2
+const TYPE_A RRType = 1
+const TYPE_NS RRType = 2
 
 // CLASS_IN is one of many DNS query classes, however, it is the only one currently
 // needed for this project.
-const CLASS_IN DNSQueryClass = 1
+const CLASS_IN RRClass = 1
 
 // RECURSION_DESIRED is the DNS query header flag to enable recursive queries
 const RECURSION_DESIRED = 1 << 8
@@ -150,8 +150,8 @@ func ParseHeader(r *bytes.Reader) (*DNSHeader, error) {
 // DNSQuestion is a representation of the header of a DNS query.
 type DNSQuestion struct {
 	name  []byte
-	type_ DNSQueryType
-	class DNSQueryClass
+	type_ RRType
+	class RRClass
 }
 
 // ToBytes returns a the encoded DNS question as a slice of bytes ready to transmit.
@@ -283,8 +283,8 @@ func decodePointer(length byte, r *bytes.Reader) (uint16, error) {
 // DNSRecord is a representation of a DNS record
 type DNSRecord struct {
 	name  []byte
-	type_ DNSQueryType
-	class DNSQueryClass
+	type_ RRType
+	class RRClass
 	ttl   uint32
 	data  []byte
 }
@@ -333,7 +333,7 @@ func ParseRecord(r *bytes.Reader) (*DNSRecord, error) {
 // byte slice.
 func readData(
 	r *bytes.Reader,
-	recordType DNSQueryType,
+	recordType RRType,
 	dataLen uint16,
 ) ([]byte, error) {
 	if recordType == TYPE_NS {

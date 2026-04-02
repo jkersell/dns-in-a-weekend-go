@@ -148,7 +148,7 @@ func TestParseRecord(t *testing.T) {
 func TestReadData(t *testing.T) {
 	tests := []struct {
 		data       []byte
-		recordType DNSQueryType
+		recordType RRType
 		dataLen    uint16
 		expected   []byte
 	}{
@@ -259,7 +259,7 @@ func TestBuildQuery(t *testing.T) {
 	var tests = []struct {
 		queryID    uint16
 		domainName string
-		recordType DNSQueryType
+		recordType RRType
 		expected   []byte
 	}{
 		{

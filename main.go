@@ -19,7 +19,7 @@ import (
 func BuildQuery(
 	queryID uint16,
 	domainName string,
-	recordType DNSQueryType,
+	recordType RRType,
 ) ([]byte, error) {
 	header := DNSHeader{
 		id:              queryID,
@@ -50,7 +50,7 @@ func BuildQuery(
 
 // lookupDomain sends a query to the name server at address to request records of type
 // recordType for domain and returns a DNSPacket.
-func lookupDomain(address, domain string, recordType DNSQueryType) (*DNSPacket, error) {
+func lookupDomain(address, domain string, recordType RRType) (*DNSPacket, error) {
 	conn, err := net.Dial("udp", net.JoinHostPort(address, "53"))
 	if err != nil {
 		return nil, fmt.Errorf("Failed to connect to %v", address)
