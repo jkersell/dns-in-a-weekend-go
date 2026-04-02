@@ -92,13 +92,5 @@ func main() {
 		fmt.Println("Domain name not found")
 	}
 
-	ipAddress := packet.answers[0].data
-	ip := fmt.Sprintf(
-		"%d.%d.%d.%d",
-		ipAddress[0],
-		ipAddress[1],
-		ipAddress[2],
-		ipAddress[3],
-	)
-	fmt.Println("IP: ", ip)
+	fmt.Printf("IP: %s\n", dottedDecimal(packet.answers[0].data))
 }

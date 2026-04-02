@@ -329,3 +329,17 @@ func ParseRecord(r *bytes.Reader) (*DNSRecord, error) {
 
 	return &rec, nil
 }
+
+// dottedDecimal reads four bytes from ipAddress and returns a byte slice with
+// those bytes pretty printed as decimal numbers separated by dots.
+func dottedDecimal(ipAddress []byte) []byte {
+	var dotted []byte
+	return fmt.Appendf(
+		dotted,
+		"%d.%d.%d.%d",
+		ipAddress[0],
+		ipAddress[1],
+		ipAddress[2],
+		ipAddress[3],
+	)
+}
