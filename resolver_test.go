@@ -39,7 +39,11 @@ func TestDNSHeaderToBytes(t *testing.T) {
 				num_authorities: 0,
 				num_answers:     0,
 			},
-			expected: []byte("\x13\x14\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00"),
+			expected: []byte{
+				0x13, 0x14, 0x00, 0x00,
+				0x00, 0x01, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00,
+			},
 		}, {
 			h: DNSHeader{
 				id:              0x1f2a,
@@ -49,7 +53,11 @@ func TestDNSHeaderToBytes(t *testing.T) {
 				num_authorities: 1,
 				num_answers:     1,
 			},
-			expected: []byte("\x1f\x2a\x00\x01\x00\x00\x00\x01\x00\x01\x00\x01"),
+			expected: []byte{
+				0x1f, 0x2a, 0x00, 0x01,
+				0x00, 0x00, 0x00, 0x01,
+				0x00, 0x01, 0x00, 0x01,
+			},
 		},
 	}
 
@@ -266,13 +274,13 @@ func TestBuildQuery(t *testing.T) {
 			queryID:    0x3c5f,
 			domainName: "www.example.com",
 			recordType: TYPE_A,
-			expected: []byte(
-				"\x3c\x5f\x01\x00\x00\x01\x00\x00" +
-					"\x00\x00\x00\x00\x03\x77\x77\x77" +
-					"\x07\x65\x78\x61\x6d\x70\x6c\x65" +
-					"\x03\x63\x6f\x6d\x00\x00\x01\x00" +
-					"\x01",
-			),
+			expected: []byte{
+				0x3c, 0x5f, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x03, 0x77, 0x77, 0x77,
+				0x07, 0x65, 0x78, 0x61, 0x6d, 0x70, 0x6c, 0x65,
+				0x03, 0x63, 0x6f, 0x6d, 0x00, 0x00, 0x01, 0x00,
+				0x01,
+			},
 		},
 	}
 
