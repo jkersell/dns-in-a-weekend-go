@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"io"
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -133,7 +134,7 @@ func TestParseRecord(t *testing.T) {
 		type_: TYPE_A,
 		class: CLASS_IN,
 		ttl:   21147,
-		data:  []byte{0x5d, 0xb8, 0xd8, 0x22},
+		data:  []byte("93.184.216.34"),
 	}
 	r := bytes.NewReader(RESPONSE_BYTES)
 	r.Seek(33, io.SeekStart)
@@ -142,6 +143,39 @@ func TestParseRecord(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, expected, *actual)
+}
+
+func TestReadData(t *testing.T) {
+	tests := []struct {
+		data       []byte
+		recordType DNSQueryType
+		dataLen    uint16
+		expected   []byte
+	}{
+		{
+			data:       []byte("\x01e\x0cgtld-servers\x03net"),
+			recordType: TYPE_NS,
+			dataLen:    18,
+			expected:   []byte("e.gtld-servers.net"),
+		}, {
+			data:       []byte{0x08, 0x08, 0x08, 0x08},
+			recordType: TYPE_A,
+			dataLen:    4,
+			expected:   []byte("8.8.8.8"),
+		}, {
+			data:       []byte{0x08, 0x08, 0x08, 0x08},
+			recordType: math.MaxUint16,
+			dataLen:    4,
+			expected:   []byte{0x08, 0x08, 0x08, 0x08},
+		},
+	}
+
+	for _, tt := range tests {
+		actual, err := readData(bytes.NewReader(tt.data), tt.recordType, tt.dataLen)
+
+		assert.NoError(t, err)
+		assert.Equal(t, tt.expected, actual)
+	}
 }
 
 func TestDecodePointer(t *testing.T) {
@@ -209,7 +243,7 @@ func TestParsePacket(t *testing.T) {
 				type_: TYPE_A,
 				class: CLASS_IN,
 				ttl:   21147,
-				data:  []byte{0x5d, 0xb8, 0xd8, 0x22},
+				data:  []byte("93.184.216.34"),
 			},
 		},
 		authorities: []*DNSRecord{},

@@ -10,9 +10,8 @@ import (
 type DNSQueryType uint16
 type DNSQueryClass uint16
 
-// TYPE_A is one of many DNS query types, however, it is the only one currently needed
-// for this project.
 const TYPE_A DNSQueryType = 1
+const TYPE_NS DNSQueryType = 2
 
 // CLASS_IN is one of many DNS query classes, however, it is the only one currently
 // needed for this project.
@@ -321,13 +320,40 @@ func ParseRecord(r *bytes.Reader) (*DNSRecord, error) {
 		return nil, fmt.Errorf("Failed to parse the record: %v", err)
 	}
 
-	rec.data = make([]byte, dataLen)
-	err = binary.Read(r, binary.BigEndian, &rec.data)
+	rec.data, err = readData(r, rec.type_, dataLen)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to parse the record reading data: %v", err)
+		return nil, fmt.Errorf("Failed to parse the record: %v", err)
 	}
 
 	return &rec, nil
+}
+
+// readData reads dataLen bytes from r and decodes the read data according the the
+// the type of the record specified by recordType. The decoded data is returned as a
+// byte slice.
+func readData(
+	r *bytes.Reader,
+	recordType DNSQueryType,
+	dataLen uint16,
+) ([]byte, error) {
+	if recordType == TYPE_NS {
+		name, err := decodeName(r)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to parse the record: %v", err)
+		}
+		return name, nil
+	}
+
+	raw_data := make([]byte, dataLen)
+	err := binary.Read(r, binary.BigEndian, raw_data)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse the record while reading data: %v", err)
+	}
+
+	if recordType == TYPE_A {
+		return dottedDecimal(raw_data), nil
+	}
+	return raw_data, nil
 }
 
 // dottedDecimal reads four bytes from ipAddress and returns a byte slice with
