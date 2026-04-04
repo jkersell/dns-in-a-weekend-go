@@ -16,6 +16,32 @@ import (
 	"time"
 )
 
+func Resolve(domainName string, recordType RRType) ([]byte, error) {
+	nameserver := "198.41.0.4"
+	for {
+		fmt.Printf("Querying %s for %s\n", nameserver, domainName)
+
+		packet, err := lookupDomain(nameserver, domainName, recordType)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to resolve domain: %v\n", err)
+		}
+
+		if ip := packet.Answer(); ip != nil {
+			return ip, nil
+		} else if nsIP := packet.NameserverIP(); nsIP != nil {
+			nameserver = string(nsIP)
+		} else if nsDomain := packet.Nameserver(); nsDomain != nil {
+			ns, err := Resolve(string(nsDomain), recordType)
+			if err != nil {
+				return nil, fmt.Errorf("Failed to resolve domain: %v\n", err)
+			}
+			nameserver = string(ns)
+		} else {
+			return nil, fmt.Errorf("Failed to resolve domain: %v\n", err)
+		}
+	}
+}
+
 func BuildQuery(
 	queryID uint16,
 	domainName string,
@@ -23,7 +49,7 @@ func BuildQuery(
 ) ([]byte, error) {
 	header := DNSHeader{
 		id:              queryID,
-		flags:           RECURSION_DESIRED,
+		flags:           0,
 		num_questions:   1,
 		num_answers:     0,
 		num_authorities: 0,
@@ -82,15 +108,11 @@ func dnsQueryID() uint16 {
 }
 
 func main() {
-	packet, err := lookupDomain("8.8.8.8", "www.example.com", TYPE_A)
+	ip, err := Resolve("www.twitter.com", TYPE_A)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to look up domain: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to resolve domain: %v\n", err)
 		os.Exit(1)
 	}
 
-	if packet.header.num_answers == 0 {
-		fmt.Println("Domain name not found")
-	}
-
-	fmt.Printf("IP: %s\n", dottedDecimal(packet.answers[0].data))
+	fmt.Printf("IP: %s\n", ip)
 }

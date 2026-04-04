@@ -17,9 +17,6 @@ const TYPE_NS RRType = 2
 // needed for this project.
 const CLASS_IN RRClass = 1
 
-// RECURSION_DESIRED is the DNS query header flag to enable recursive queries
-const RECURSION_DESIRED = 1 << 8
-
 // DNSPacket is a representation of a DNS packet
 type DNSPacket struct {
 	header      *DNSHeader
@@ -81,6 +78,36 @@ func ParsePacket(data []byte) (*DNSPacket, error) {
 		authorities: authorities,
 		additionals: additionals,
 	}, nil
+}
+
+// Answer returns the first A record in the answers section
+func (p *DNSPacket) Answer() []byte {
+	for _, a := range p.answers {
+		if a.type_ == TYPE_A {
+			return a.data
+		}
+	}
+	return nil
+}
+
+// Nameserver returns the first NS record in the authorities section
+func (p *DNSPacket) Nameserver() []byte {
+	for _, n := range p.authorities {
+		if n.type_ == TYPE_NS {
+			return n.data
+		}
+	}
+	return nil
+}
+
+// NameserverIP returns the first A record in the additionals section
+func (p *DNSPacket) NameserverIP() []byte {
+	for _, n := range p.additionals {
+		if n.type_ == TYPE_A {
+			return n.data
+		}
+	}
+	return nil
 }
 
 // DNSHeader is a representation of the header of a DNS query.
