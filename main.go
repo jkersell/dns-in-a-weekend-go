@@ -46,10 +46,11 @@ func BuildQuery(
 	queryID uint16,
 	domainName string,
 	recordType RRType,
+	flags uint16,
 ) ([]byte, error) {
 	header := DNSHeader{
 		id:              queryID,
-		flags:           0,
+		flags:           flags,
 		num_questions:   1,
 		num_answers:     0,
 		num_authorities: 0,
@@ -83,7 +84,7 @@ func lookupDomain(address, domain string, recordType RRType) (*DNSPacket, error)
 	}
 	defer conn.Close()
 
-	q, err := BuildQuery(dnsQueryID(), domain, recordType)
+	q, err := BuildQuery(dnsQueryID(), domain, recordType, 0)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to build a DNS query: %v", err)
 	}
