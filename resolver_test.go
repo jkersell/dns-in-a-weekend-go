@@ -30,10 +30,12 @@ var RESPONSE_BYTES []byte = []byte{
 
 func TestDNSHeaderToBytes(t *testing.T) {
 	var tests = []struct {
+		name     string
 		h        DNSHeader
 		expected []byte
 	}{
 		{
+			name: "query",
 			h: DNSHeader{
 				id:              0x1314,
 				flags:           0,
@@ -48,6 +50,7 @@ func TestDNSHeaderToBytes(t *testing.T) {
 				0x00, 0x00, 0x00, 0x00,
 			},
 		}, {
+			name: "response",
 			h: DNSHeader{
 				id:              0x1f2a,
 				flags:           1,
@@ -65,19 +68,23 @@ func TestDNSHeaderToBytes(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		actual, err := tt.h.ToBytes()
+		t.Run(tt.name, func(b *testing.T) {
+			actual, err := tt.h.ToBytes()
 
-		assert.NoError(t, err)
-		assert.Equal(t, tt.expected, actual)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expected, actual)
+		})
 	}
 }
 
 func TestDNSQuestionsToBytes(t *testing.T) {
 	var tests = []struct {
+		name     string
 		q        DNSQuestion
 		expected []byte
 	}{
 		{
+			name: "example.com",
 			q: DNSQuestion{
 				name:  []byte("example.com"),
 				type_: 1,
@@ -87,6 +94,7 @@ func TestDNSQuestionsToBytes(t *testing.T) {
 				"\x07example\x03com\x00\x00\x01\x00\x01",
 			),
 		}, {
+			name: "google.com",
 			q: DNSQuestion{
 				name:  []byte("google.com"),
 				type_: 0,
@@ -99,10 +107,12 @@ func TestDNSQuestionsToBytes(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		actual, err := tt.q.ToBytes()
+		t.Run(tt.name, func(t *testing.T) {
+			actual, err := tt.q.ToBytes()
 
-		assert.NoError(t, err)
-		assert.Equal(t, tt.expected, actual)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expected, actual)
+		})
 	}
 }
 
@@ -158,22 +168,26 @@ func TestParseRecord(t *testing.T) {
 
 func TestReadData(t *testing.T) {
 	tests := []struct {
+		name       string
 		data       []byte
 		recordType RRType
 		dataLen    uint16
 		expected   []byte
 	}{
 		{
+			name:       "NS record",
 			data:       []byte("\x01e\x0cgtld-servers\x03net"),
 			recordType: TYPE_NS,
 			dataLen:    18,
 			expected:   []byte("e.gtld-servers.net"),
 		}, {
+			name:       "A record",
 			data:       []byte{0x08, 0x08, 0x08, 0x08},
 			recordType: TYPE_A,
 			dataLen:    4,
 			expected:   []byte("8.8.8.8"),
 		}, {
+			name:       "Unknown record type",
 			data:       []byte{0x08, 0x08, 0x08, 0x08},
 			recordType: math.MaxUint16,
 			dataLen:    4,
@@ -182,52 +196,62 @@ func TestReadData(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		actual, err := readData(bytes.NewReader(tt.data), tt.recordType, tt.dataLen)
+		t.Run(tt.name, func(t *testing.T) {
+			actual, err := readData(bytes.NewReader(tt.data), tt.recordType, tt.dataLen)
 
-		assert.NoError(t, err)
-		assert.Equal(t, tt.expected, actual)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expected, actual)
+		})
 	}
 }
 
 func TestDecodePointer(t *testing.T) {
 	tests := []struct {
+		name     string
 		length   byte
 		nextByte byte
 		expected uint16
 	}{
 		{
+			name:     "max value",
 			length:   0b1111_1111,
 			nextByte: 0b1111_1111,
 			expected: 16383,
 		},
 		{
+			name:     "larger value",
 			length:   0b1100_1111,
 			nextByte: 0b1111_1111,
 			expected: 4095,
 		},
 		{
+			name:     "min value",
 			length:   0b1100_0000,
 			nextByte: 0b0000_0000,
 			expected: 0,
 		},
 		{
+			name:     "max next byte",
 			length:   0b1100_0000,
 			nextByte: 0b1111_1111,
 			expected: 255,
 		},
 		{
+			name:     "low value",
 			length:   0b1100_0000,
 			nextByte: 0b0000_0001,
 			expected: 1,
 		},
 	}
 	for _, tt := range tests {
-		r := bytes.NewReader([]byte{tt.nextByte})
+		t.Run(tt.name, func(t *testing.T) {
+			r := bytes.NewReader([]byte{tt.nextByte})
 
-		actual, err := decodePointer(tt.length, r)
+			actual, err := decodePointer(tt.length, r)
 
-		assert.NoError(t, err)
-		assert.Equal(t, tt.expected, actual)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expected, actual)
+		})
 	}
 }
 
@@ -268,6 +292,7 @@ func TestParsePacket(t *testing.T) {
 
 func TestBuildQuery(t *testing.T) {
 	var tests = []struct {
+		name       string
 		queryID    uint16
 		domainName string
 		recordType RRType
@@ -275,6 +300,7 @@ func TestBuildQuery(t *testing.T) {
 		expected   []byte
 	}{
 		{
+			name:       "example.com recursive",
 			queryID:    0x3c5f,
 			domainName: "www.example.com",
 			recordType: TYPE_A,
@@ -287,6 +313,7 @@ func TestBuildQuery(t *testing.T) {
 				0x01,
 			},
 		}, {
+			name:       "example.com non-recursive",
 			queryID:    0x3c5f,
 			domainName: "www.example.com",
 			recordType: TYPE_A,
@@ -302,14 +329,16 @@ func TestBuildQuery(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		actual, err := BuildQuery(
-			tt.queryID,
-			tt.domainName,
-			tt.recordType,
-			tt.flags,
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			actual, err := BuildQuery(
+				tt.queryID,
+				tt.domainName,
+				tt.recordType,
+				tt.flags,
+			)
 
-		assert.NoError(t, err)
-		assert.Equal(t, tt.expected, actual)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expected, actual)
+		})
 	}
 }
