@@ -188,10 +188,10 @@ func TestReadData(t *testing.T) {
 			expected:   []byte("8.8.8.8"),
 		}, {
 			name:       "Unknown record type",
-			data:       []byte{0x08, 0x08, 0x08, 0x08},
+			data:       []byte("return the raw data"),
 			recordType: math.MaxUint16,
-			dataLen:    4,
-			expected:   []byte{0x08, 0x08, 0x08, 0x08},
+			dataLen:    19,
+			expected:   []byte("return the raw data"),
 		},
 	}
 
